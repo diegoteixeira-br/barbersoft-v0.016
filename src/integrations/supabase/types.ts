@@ -923,6 +923,104 @@ export type Database = {
         }
         Relationships: []
       }
+      influencer_partnerships: {
+        Row: {
+          commission_percent: number
+          created_at: string
+          email: string | null
+          ends_at: string | null
+          id: string
+          instagram_handle: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commission_percent: number
+          created_at?: string
+          email?: string | null
+          ends_at?: string | null
+          id?: string
+          instagram_handle?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commission_percent?: number
+          created_at?: string
+          email?: string | null
+          ends_at?: string | null
+          id?: string
+          instagram_handle?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      influencer_payments: {
+        Row: {
+          amount: number
+          commission_percent: number
+          created_at: string
+          id: string
+          mrr_base: number
+          notes: string | null
+          paid_at: string | null
+          partnership_id: string
+          payment_method: string | null
+          period_end: string
+          period_start: string
+          status: string
+        }
+        Insert: {
+          amount?: number
+          commission_percent: number
+          created_at?: string
+          id?: string
+          mrr_base?: number
+          notes?: string | null
+          paid_at?: string | null
+          partnership_id: string
+          payment_method?: string | null
+          period_end: string
+          period_start: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          commission_percent?: number
+          created_at?: string
+          id?: string
+          mrr_base?: number
+          notes?: string | null
+          paid_at?: string | null
+          partnership_id?: string
+          payment_method?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "influencer_payments_partnership_id_fkey"
+            columns: ["partnership_id"]
+            isOneToOne: false
+            referencedRelation: "influencer_partnerships"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
           company_id: string

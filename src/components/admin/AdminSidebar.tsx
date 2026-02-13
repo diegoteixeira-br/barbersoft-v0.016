@@ -6,7 +6,8 @@ import {
   MessageSquare, 
   Settings, 
   LogOut,
-  Shield
+  Shield,
+  Handshake
 } from "lucide-react";
 
 const adminNavItems = [
@@ -25,6 +26,11 @@ const adminNavItems = [
     to: "/admin/feedbacks", 
     icon: MessageSquare, 
     label: "Feedbacks" 
+  },
+  { 
+    to: "/admin/influencers", 
+    icon: Handshake, 
+    label: "Influenciadores" 
   },
   { 
     to: "/admin/settings", 

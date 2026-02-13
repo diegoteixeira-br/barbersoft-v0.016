@@ -938,6 +938,7 @@ export type Database = {
           started_at: string
           status: string
           term_accepted_at: string | null
+          term_token: string
           term_version: string | null
           updated_at: string
         }
@@ -955,6 +956,7 @@ export type Database = {
           started_at?: string
           status?: string
           term_accepted_at?: string | null
+          term_token?: string
           term_version?: string | null
           updated_at?: string
         }
@@ -972,6 +974,7 @@ export type Database = {
           started_at?: string
           status?: string
           term_accepted_at?: string | null
+          term_token?: string
           term_version?: string | null
           updated_at?: string
         }

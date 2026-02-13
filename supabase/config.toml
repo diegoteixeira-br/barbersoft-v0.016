@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-demo-audio]
 verify_jwt = false
+
+[functions.send-influencer-term]
+verify_jwt = false

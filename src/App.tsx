@@ -50,6 +50,7 @@ import Termos from "./pages/institucional/Termos";
 import LGPD from "./pages/institucional/LGPD";
 
 import ResetDeletionPassword from "./pages/ResetDeletionPassword";
+import InfluencerTermAcceptance from "./pages/InfluencerTermAcceptance";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +123,7 @@ const App = () => (
             <Route path="/termos" element={<Termos />} />
             <Route path="/lgpd" element={<LGPD />} />
             <Route path="/reset-deletion-password" element={<ResetDeletionPassword />} />
+            <Route path="/termo-influenciador/:token" element={<InfluencerTermAcceptance />} />
             
             {/* Protected Routes */}
             <Route path="/*" element={

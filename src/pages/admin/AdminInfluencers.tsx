@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, DollarSign, Users, TrendingUp, AlertCircle, Copy, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, DollarSign, Users, TrendingUp, AlertCircle, Copy, FileText, Eye, Send } from "lucide-react";
 import { useInfluencerPartnerships, useInfluencerPayments, useMRR, useInfluencerTermTemplate, InfluencerPartnership } from "@/hooks/useInfluencerPartnerships";
 import { InfluencerFormModal } from "@/components/admin/InfluencerFormModal";
 import { InfluencerPaymentModal } from "@/components/admin/InfluencerPaymentModal";
 import { InfluencerPaymentsTable } from "@/components/admin/InfluencerPaymentsTable";
+import { InfluencerTermPreviewModal } from "@/components/admin/InfluencerTermPreviewModal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,7 @@ export default function AdminInfluencers() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [markPaidMethod, setMarkPaidMethod] = useState("pix");
   const [markPaidId, setMarkPaidId] = useState<string | null>(null);
+  const [termPreviewTarget, setTermPreviewTarget] = useState<InfluencerPartnership | null>(null);
   const siteUrl = window.location.origin;
 
   // Query companies linked to influencers
@@ -171,8 +173,8 @@ export default function AdminInfluencers() {
                       <TableCell><Badge variant={s.variant}>{s.label}</Badge></TableCell>
                       <TableCell>
                         <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                          <Button size="sm" variant="ghost" title="Gerar PDF do Termo" onClick={() => handleDownloadTerm(inf)}>
-                            <FileText className="h-4 w-4" />
+                          <Button size="sm" variant="ghost" title="Visualizar Termo" onClick={() => setTermPreviewTarget(inf)}>
+                            <Eye className="h-4 w-4" />
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => { setPaymentTarget(inf); setPaymentOpen(true); }}>
                             <DollarSign className="h-4 w-4" />
@@ -224,6 +226,13 @@ export default function AdminInfluencers() {
         influencer={editing}
         onSubmit={handleFormSubmit}
         isLoading={createPartnership.isPending || updatePartnership.isPending}
+      />
+
+      <InfluencerTermPreviewModal
+        open={!!termPreviewTarget}
+        onOpenChange={(open) => !open && setTermPreviewTarget(null)}
+        influencer={termPreviewTarget}
+        termTemplate={termTemplate || null}
       />
 
       <InfluencerPaymentModal

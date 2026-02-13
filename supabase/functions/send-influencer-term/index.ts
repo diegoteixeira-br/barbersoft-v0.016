@@ -16,15 +16,29 @@ Deno.serve(async (req) => {
     const resendApiKey = Deno.env.get("RESEND_API_KEY")!;
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const body = await req.json();
+    const { influencer_id, action } = body;
 
-    const { influencer_id } = await req.json();
+    // Action: update term template content
+    if (action === "update_term_content") {
+      const { term_id, content, version } = body;
+      const { error } = await supabase
+        .from("influencer_term_templates")
+        .update({ content, version, updated_at: new Date().toISOString() })
+        .eq("id", term_id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Default action: send email
     if (!influencer_id) {
       return new Response(JSON.stringify({ error: "influencer_id is required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Get influencer
     const { data: inf, error: infErr } = await supabase
       .from("influencer_partnerships")
       .select("*")
@@ -45,7 +59,6 @@ Deno.serve(async (req) => {
 
     const termLink = `https://barbersoft.com.br/termo-influenciador/${inf.term_token}`;
 
-    // Send email via Resend
     const emailRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -62,7 +75,7 @@ Deno.serve(async (req) => {
             <h2 style="text-align: center;">Termo de Parceria com Influenciador</h2>
             <p>Olá, <strong>${inf.name}</strong>!</p>
             <p>Você foi convidado(a) para se tornar um influenciador parceiro da BarberSoft.</p>
-            <p>Sua comissão será de <strong>${inf.commission_percent}%</strong> sobre o valor pago por cada lead vinculado ao seu link, de forma recorrente e vitalícia enquanto o lead permanecer ativo.</p>
+            <p>Sua comissão será de <strong>${inf.commission_percent}%</strong> sobre o valor pago por cada lead vinculado ao seu link, válida por <strong>12 meses</strong> a partir do cadastro de cada lead.</p>
             <p>Para visualizar e aceitar o termo de parceria, clique no botão abaixo:</p>
             <div style="text-align: center; margin: 30px 0;">
               <a href="${termLink}" style="background-color: #FF6B00; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">

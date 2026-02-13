@@ -201,7 +201,8 @@ export default function InfluencerTermAcceptance() {
               className={`text-sm cursor-pointer ${hasScrolledToEnd ? "" : "text-muted-foreground"}`}
             >
               Declaro que li, compreendi e concordo com os termos desta parceria e a
-              comissão de <strong>{influencer?.commission_percent}%</strong> sobre o valor pago pelos leads vinculados.
+              comissão de <strong>{influencer?.commission_percent}%</strong> sobre o valor pago pelos leads vinculados,
+              válida por 12 meses a partir do cadastro de cada lead.
             </label>
           </div>
 

@@ -436,6 +436,7 @@ export type Database = {
           vocal_confirmation_enabled: boolean | null
           vocal_notification_enabled: boolean | null
           webhook_url: string | null
+          whatsapp_agent_enabled: boolean | null
         }
         Insert: {
           appointment_reminder_enabled?: boolean | null
@@ -473,6 +474,7 @@ export type Database = {
           vocal_confirmation_enabled?: boolean | null
           vocal_notification_enabled?: boolean | null
           webhook_url?: string | null
+          whatsapp_agent_enabled?: boolean | null
         }
         Update: {
           appointment_reminder_enabled?: boolean | null
@@ -510,6 +512,7 @@ export type Database = {
           vocal_confirmation_enabled?: boolean | null
           vocal_notification_enabled?: boolean | null
           webhook_url?: string | null
+          whatsapp_agent_enabled?: boolean | null
         }
         Relationships: []
       }

@@ -16,6 +16,7 @@ export interface MarketingSettings {
   vocal_notification_enabled: boolean;
   vocal_cancellation_enabled: boolean;
   vocal_confirmation_enabled: boolean;
+  whatsapp_agent_enabled: boolean;
 }
 
 export function useMarketingSettings() {
@@ -29,7 +30,7 @@ export function useMarketingSettings() {
 
       const { data, error } = await supabase
         .from("business_settings")
-        .select("birthday_automation_enabled, birthday_message_template, rescue_automation_enabled, rescue_days_threshold, rescue_message_template, automation_send_hour, automation_send_minute, appointment_reminder_enabled, appointment_reminder_minutes, appointment_reminder_template, vocal_notification_enabled, vocal_cancellation_enabled, vocal_confirmation_enabled")
+        .select("birthday_automation_enabled, birthday_message_template, rescue_automation_enabled, rescue_days_threshold, rescue_message_template, automation_send_hour, automation_send_minute, appointment_reminder_enabled, appointment_reminder_minutes, appointment_reminder_template, vocal_notification_enabled, vocal_cancellation_enabled, vocal_confirmation_enabled, whatsapp_agent_enabled")
         .eq("user_id", user.id)
         .maybeSingle();
 

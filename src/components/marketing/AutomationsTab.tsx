@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Cake, UserX, Save, Loader2, Clock, Bell } from "lucide-react";
+import { Cake, UserX, Save, Loader2, Clock, Bell, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,7 @@ export function AutomationsTab() {
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderMinutes, setReminderMinutes] = useState(30);
   const [reminderMessage, setReminderMessage] = useState(DEFAULT_REMINDER_MESSAGE);
+  const [whatsappAgentEnabled, setWhatsappAgentEnabled] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -79,6 +80,7 @@ export function AutomationsTab() {
       const savedReminder = settings.appointment_reminder_template || DEFAULT_REMINDER_MESSAGE;
       const reminderWithoutSuffix = savedReminder.replace(FIXED_REMINDER_SUFFIX, '').trim();
       setReminderMessage(reminderWithoutSuffix || DEFAULT_REMINDER_MESSAGE);
+      setWhatsappAgentEnabled(settings.whatsapp_agent_enabled ?? false);
     }
   }, [settings]);
 
@@ -97,6 +99,7 @@ export function AutomationsTab() {
       appointment_reminder_enabled: reminderEnabled,
       appointment_reminder_minutes: reminderMinutes,
       appointment_reminder_template: fullReminderTemplate,
+      whatsapp_agent_enabled: whatsappAgentEnabled,
     });
   };
 
@@ -344,6 +347,34 @@ export function AutomationsTab() {
 
           <div className="rounded-lg bg-green-500/10 p-3 text-sm text-green-700 dark:text-green-400">
             <strong>✅ Proteção anti-spam:</strong> Cada cliente recebe apenas 1 lembrete por agendamento, mesmo que o sistema verifique várias vezes.
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* WhatsApp Agent */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
+                <Bot className="h-5 w-5 text-purple-500" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Agente WhatsApp</CardTitle>
+                <CardDescription>
+                  Ativa ou desativa o atendimento automático via WhatsApp (Jackson)
+                </CardDescription>
+              </div>
+            </div>
+            <Switch
+              checked={whatsappAgentEnabled}
+              onCheckedChange={setWhatsappAgentEnabled}
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg bg-purple-500/10 p-3 text-sm text-purple-700 dark:text-purple-400">
+            <strong>🤖 Agente IA:</strong> Quando ativado, o agente responde automaticamente as mensagens dos clientes no WhatsApp, realizando agendamentos, tirando dúvidas e fornecendo informações sobre serviços.
           </div>
         </CardContent>
       </Card>

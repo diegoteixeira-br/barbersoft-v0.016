@@ -1,0 +1,1 @@
+ALTER TABLE business_settings ADD COLUMN whatsapp_agent_enabled BOOLEAN DEFAULT false;

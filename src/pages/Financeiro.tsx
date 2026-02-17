@@ -19,8 +19,8 @@ export default function Financeiro() {
   const { isBarber } = useBarberAuth();
   const isDeletionPasswordActive = !!settings?.deletion_password_enabled && !!settings?.deletion_password_hash;
 
-  // Barbers always start on commission and can only see commission
-  const defaultTab = isBarber ? "commission" : "cash-flow";
+  // Always default to commission when password is active or user is barber
+  const defaultTab = (isDeletionPasswordActive || isBarber) ? "commission" : "cash-flow";
 
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [unlockedTabs, setUnlockedTabs] = useState<Set<string>>(new Set());

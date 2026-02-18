@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useRecaptcha } from "@/hooks/useRecaptcha";
+import { useRecaptchaV2 } from "@/hooks/useRecaptcha";
+import { RecaptchaWidget } from "@/components/RecaptchaWidget";
 import { Scissors, Mail, Lock, Loader2 } from "lucide-react";
 
 export default function BarberAuth() {
@@ -14,146 +15,68 @@ export default function BarberAuth() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isReady: isRecaptchaReady, executeRecaptcha } = useRecaptcha();
+  const { recaptchaRef, getToken, resetRecaptcha } = useRecaptchaV2();
 
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
       if (session) {
         const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .eq("role", "barber")
-          .single();
-
-        if (roleData) {
-          navigate("/barbeiro");
-          return;
-        }
+          .from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "barber").single();
+        if (roleData) { navigate("/barbeiro"); return; }
       }
-      
       setIsCheckingSession(false);
     };
-
     checkSession();
   }, [navigate]);
 
-  const verifyRecaptcha = async (): Promise<boolean> => {
-    const token = await executeRecaptcha("barber_login");
-    if (!token) {
-      toast({
-        title: "Erro de segurança",
-        description: "Verificação não disponível. Tente novamente.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke("verify-recaptcha", {
-        body: { token, action: "barber_login" },
-      });
-
-      if (error || !data?.success) {
-        toast({
-          title: "Verificação falhou",
-          description: "Por favor, tente novamente.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
-      return true;
-    } catch (err) {
-      console.error("reCAPTCHA verification error:", err);
-      toast({
-        title: "Erro de verificação",
-        description: "Não foi possível validar. Tente novamente.",
-        variant: "destructive",
-      });
-      return false;
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const token = getToken();
+    if (!token) {
+      toast({ title: "Verificação necessária", description: "Por favor, marque a caixa 'Não sou um robô'.", variant: "destructive" });
+      return;
+    }
+
     setIsLoading(true);
-
     try {
-      // Verify reCAPTCHA first
-      const isHuman = await verifyRecaptcha();
-      if (!isHuman) {
-        setIsLoading(false);
-        return;
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
-          toast({
-            title: "Credenciais inválidas",
-            description: "Verifique seu email e senha",
-            variant: "destructive",
-          });
+          toast({ title: "Credenciais inválidas", description: "Verifique seu email e senha", variant: "destructive" });
         } else {
-          toast({
-            title: "Erro ao entrar",
-            description: error.message,
-            variant: "destructive",
-          });
+          toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
         }
         return;
       }
 
       if (!data.user) {
-        toast({
-          title: "Erro ao entrar",
-          description: "Usuário não encontrado",
-          variant: "destructive",
-        });
+        toast({ title: "Erro ao entrar", description: "Usuário não encontrado", variant: "destructive" });
         return;
       }
 
       const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", data.user.id)
-        .eq("role", "barber")
-        .single();
+        .from("user_roles").select("role").eq("user_id", data.user.id).eq("role", "barber").single();
 
       if (!roleData) {
         await supabase.auth.signOut();
-        toast({
-          title: "Acesso negado",
-          description: "Esta conta não tem acesso de profissional. Use o login principal.",
-          variant: "destructive",
-        });
+        toast({ title: "Acesso negado", description: "Esta conta não tem acesso de profissional. Use o login principal.", variant: "destructive" });
         return;
       }
 
-      toast({
-        title: "Bem-vindo!",
-        description: "Login realizado com sucesso",
-      });
-
+      toast({ title: "Bem-vindo!", description: "Login realizado com sucesso" });
       navigate("/barbeiro");
-
     } catch (error: any) {
-      toast({
-        title: "Erro inesperado",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erro inesperado", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
+      resetRecaptcha();
+      setRecaptchaToken(null);
     }
   };
 
@@ -172,12 +95,8 @@ export default function BarberAuth() {
           <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
             <Scissors className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl text-foreground">
-            Acesso Profissional
-          </CardTitle>
-          <CardDescription>
-            Entre com suas credenciais para acessar o sistema
-          </CardDescription>
+          <CardTitle className="text-2xl text-foreground">Acesso Profissional</CardTitle>
+          <CardDescription>Entre com suas credenciais para acessar o sistema</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -186,15 +105,7 @@ export default function BarberAuth() {
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
+                <Input id="email" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
               </div>
             </div>
 
@@ -202,64 +113,23 @@ export default function BarberAuth() {
               <Label htmlFor="password">Senha</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  required
-                />
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10" required />
               </div>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading || !isRecaptchaReady}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Entrando...
-                </>
-              ) : (
-                "Entrar"
-              )}
+            <RecaptchaWidget recaptchaRef={recaptchaRef} onChange={setRecaptchaToken} />
+
+            <Button type="submit" className="w-full" disabled={isLoading || !recaptchaToken}>
+              {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Entrando...</>) : "Entrar"}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               É dono de barbearia?{" "}
-              <a href="/auth" className="text-primary hover:underline">
-                Acesse aqui
-              </a>
+              <a href="/auth" className="text-primary hover:underline">Acesse aqui</a>
             </p>
           </div>
-
-          <p className="text-xs text-muted-foreground text-center mt-4">
-            Este site é protegido pelo reCAPTCHA e a{" "}
-            <a
-              href="https://policies.google.com/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground"
-            >
-              Política de Privacidade
-            </a>{" "}
-            e{" "}
-            <a
-              href="https://policies.google.com/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground"
-            >
-              Termos de Serviço
-            </a>{" "}
-            do Google se aplicam.
-          </p>
         </CardContent>
       </Card>
     </div>

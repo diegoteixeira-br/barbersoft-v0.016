@@ -6,21 +6,13 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const RECAPTCHA_SITE_KEY = Deno.env.get("RECAPTCHA_SITE_KEY");
-const GOOGLE_CLOUD_PROJECT_ID = Deno.env.get("GOOGLE_CLOUD_PROJECT_ID");
-
-interface RecaptchaRequest {
-  token: string;
-  action: string;
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const { token, action } = (await req.json()) as RecaptchaRequest;
+    const { token } = await req.json();
 
     if (!token) {
       return new Response(
@@ -29,65 +21,40 @@ serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get("RECAPTCHA_SECRET_KEY");
-    if (!apiKey || !RECAPTCHA_SITE_KEY || !GOOGLE_CLOUD_PROJECT_ID) {
-      console.error("reCAPTCHA configuration missing");
+    const secretKey = Deno.env.get("RECAPTCHA_SECRET_KEY");
+    if (!secretKey) {
+      console.error("RECAPTCHA_SECRET_KEY not configured");
       return new Response(
         JSON.stringify({ success: false, error: "Configuração inválida" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Use reCAPTCHA Enterprise API
-    const verifyUrl = `https://recaptchaenterprise.googleapis.com/v1/projects/${GOOGLE_CLOUD_PROJECT_ID}/assessments?key=${apiKey}`;
+    // Use reCAPTCHA v2 siteverify API
+    const verifyUrl = "https://www.google.com/recaptcha/api/siteverify";
+    const formData = new URLSearchParams();
+    formData.append("secret", secretKey);
+    formData.append("response", token);
 
     const response = await fetch(verifyUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        event: {
-          token,
-          siteKey: RECAPTCHA_SITE_KEY,
-          expectedAction: action,
-        },
-      }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formData.toString(),
     });
 
     const result = await response.json();
+    console.log("reCAPTCHA v2 verification result:", JSON.stringify(result));
 
-    console.log(`reCAPTCHA Enterprise verification for action '${action}':`, JSON.stringify(result));
-
-    if (!response.ok) {
-      console.error("reCAPTCHA Enterprise API error:", JSON.stringify(result));
+    if (!result.success) {
+      console.error("reCAPTCHA verification failed:", result["error-codes"]);
       return new Response(
-        JSON.stringify({ success: false, error: "Erro na verificação", details: result.error?.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!result.tokenProperties?.valid) {
-      console.error("Token invalid:", result.tokenProperties?.invalidReason);
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Verificação falhou",
-          errorCodes: [result.tokenProperties?.invalidReason || "invalid-token"],
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const score = result.riskAnalysis?.score ?? 1.0;
-    if (score < 0.5) {
-      console.warn(`Low reCAPTCHA score for action '${action}': ${score}`);
-      return new Response(
-        JSON.stringify({ success: false, error: "Verificação de segurança falhou", score }),
+        JSON.stringify({ success: false, error: "Verificação falhou", errorCodes: result["error-codes"] }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     return new Response(
-      JSON.stringify({ success: true, score, action: result.tokenProperties?.action }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
